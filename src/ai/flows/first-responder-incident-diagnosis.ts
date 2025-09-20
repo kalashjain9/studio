@@ -85,7 +85,7 @@ Think step-by-step:
 1.  Analyze the incident report and the code to form a hypothesis.
 2.  If this seems like a code-level bug, clearly state the problem in the code.
 3.  If this seems like an infrastructure issue, use your tools to investigate.
-4.  Compile a concise diagnosis report summarizing your findings. If you identify a specific deployment or namespace from your tool use, include them.
+4.  Compile a concise diagnosis report summarizing your findings. If you identify a specific deployment or namespace from your tool use, include them. If not, you can omit them.
 `,
   model: 'googleai/gemini-1.5-pro-latest',
 });

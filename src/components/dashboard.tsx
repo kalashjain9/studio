@@ -193,6 +193,7 @@ export function Dashboard() {
 
   const handleSimulateIncident = () => {
     startTransition(async () => {
+      handleReset(); // Get new data for the new simulation
       setOverallStatus('in-progress');
       let currentSteps: Step[] = [];
       const incidentReport = "An incident has been reported based on the provided logs and metrics.";
