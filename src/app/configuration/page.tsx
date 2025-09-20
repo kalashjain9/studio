@@ -1,9 +1,9 @@
-import { Dashboard } from "@/components/dashboard";
 import { Sidebar, SidebarProvider, SidebarInset, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { BotMessageSquare, LayoutDashboard, Settings } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from "next/link";
 
-export default function Home() {
+export default function ConfigurationPage() {
   return (
     <SidebarProvider>
       <Sidebar>
@@ -15,28 +15,38 @@ export default function Home() {
         </SidebarHeader>
         <SidebarMenu className="flex-grow">
           <SidebarMenuItem>
-            <SidebarMenuButton isActive tooltip="Dashboard">
-              <LayoutDashboard />
-              <span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
-            </SidebarMenuButton>
+            <Link href="/">
+                <SidebarMenuButton tooltip="Dashboard">
+                <LayoutDashboard />
+                <span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
+                </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/configuration">
-              <SidebarMenuButton tooltip="Configuration">
-                <Settings />
-                <span className="group-data-[collapsible=icon]:hidden">Configuration</span>
-              </SidebarMenuButton>
-            </Link>
+            <SidebarMenuButton isActive tooltip="Configuration">
+              <Settings />
+              <span className="group-data-[collapsible=icon]:hidden">Configuration</span>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </Sidebar>
       <SidebarInset>
         <header className="flex items-center gap-4 p-4 border-b bg-background sticky top-0 z-10">
           <SidebarTrigger className="md:hidden" />
-          <h2 className="text-2xl font-bold">Autonomous SRE Incident Response</h2>
+          <h2 className="text-2xl font-bold">Configuration</h2>
         </header>
         <main className="p-4 md:p-8">
-          <Dashboard />
+            <Card>
+                <CardHeader>
+                    <CardTitle>Configuration</CardTitle>
+                    <CardDescription>
+                        Manage your application settings and agent configurations here.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p>Configuration settings will be available here in a future update.</p>
+                </CardContent>
+            </Card>
         </main>
       </SidebarInset>
     </SidebarProvider>
