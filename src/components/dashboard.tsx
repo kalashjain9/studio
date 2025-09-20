@@ -25,28 +25,40 @@ type Step = {
   status: 'pending' | 'in-progress' | 'completed' | 'error';
 };
 
-const initialLogs = `[2024-07-23 03:14:00] INFO: User login successful for user 'test'.
-[2024-07-23 03:14:15] INFO: API call to /api/data processed in 50ms.
-[2024-07-23 03:14:30] INFO: API call to /api/data processed in 55ms.
-[2024-07-23 03:14:45] INFO: API call to /api/data processed in 52ms.
-[2024-07-23 03:15:00] ERROR: OutOfMemoryError: Java heap space.
-[2024-07-23 03:15:01] CRITICAL: Pod 'my-app-pod-1' is restarting.
-[2024-07-23 03:15:05] ERROR: OutOfMemoryError: Java heap space.
-[2024-07-23 03:15:06] CRITICAL: Pod 'my-app-pod-1' is restarting.
-[2024-07-23 03:15:10] WARN: Liveness probe failed for pod 'my-app-pod-1'.
-[2024-07-23 03:15:12] ERROR: OutOfMemoryError: Java heap space.
-[2024-07-23 03:15:13] CRITICAL: Pod 'my-app-pod-1' is restarting.`;
+const generateInitialLogs = () => {
+  const now = new Date();
+  const randomMs = () => Math.floor(Math.random() * 50) + 50;
+  const podName = `my-app-pod-${Math.floor(Math.random() * 3) + 1}`;
+  return `[${now.toISOString()}] INFO: User login successful for user 'test'.
+[${new Date(now.getTime() + 15000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
+[${new Date(now.getTime() + 30000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
+[${new Date(now.getTime() + 45000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
+[${new Date(now.getTime() + 60000).toISOString()}] ERROR: OutOfMemoryError: Java heap space.
+[${new Date(now.getTime() + 61000).toISOString()}] CRITICAL: Pod '${podName}' is restarting.
+[${new Date(now.getTime() + 65000).toISOString()}] ERROR: OutOfMemoryError: Java heap space.
+[${new Date(now.getTime() + 66000).toISOString()}] CRITICAL: Pod '${podName}' is restarting.
+[${new Date(now.getTime() + 70000).toISOString()}] WARN: Liveness probe failed for pod '${podName}'.
+[${new Date(now.getTime() + 72000).toISOString()}] ERROR: OutOfMemoryError: Java heap space.
+[${new Date(now.getTime() + 73000).toISOString()}] CRITICAL: Pod '${podName}' is restarting.`;
+};
 
-const initialMetrics = `cpu_usage{pod="my-app-pod-1"}: 0.8
-memory_usage{pod="my-app-pod-1"}: 95%
-network_traffic{pod="my-app-pod-1"}: 1.2MB/s
-latency{pod="my-app-pod-1"}: 500ms`;
+const generateInitialMetrics = () => {
+    const podName = `my-app-pod-${Math.floor(Math.random() * 3) + 1}`;
+    const cpu = (Math.random() * (0.9 - 0.7) + 0.7).toFixed(1);
+    const mem = Math.floor(Math.random() * 10) + 90;
+    const traffic = (Math.random() * (2.5 - 1.0) + 1.0).toFixed(1);
+    const lat = Math.floor(Math.random() * 100) + 450;
+    return `cpu_usage{pod="${podName}"}: ${cpu}
+memory_usage{pod="${podName}"}: ${mem}%
+network_traffic{pod="${podName}"}: ${traffic}MB/s
+latency{pod="${podName}"}: ${lat}ms`;
+};
 
 const incidentReport = "A memory leak was detected in the production environment following the last deployment. Pods are crashing and restarting repeatedly with 'OutOfMemoryError' errors.";
 
 export function Dashboard() {
-  const [logs, setLogs] = useState(initialLogs);
-  const [metrics, setMetrics] = useState(initialMetrics);
+  const [logs, setLogs] = useState(generateInitialLogs);
+  const [metrics, setMetrics] = useState(generateInitialMetrics);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [steps, setSteps] = useState<Step[]>([]);
@@ -60,8 +72,8 @@ export function Dashboard() {
   const handleReset = () => {
     setSteps([]);
     setOverallStatus('idle');
-    setLogs(initialLogs);
-    setMetrics(initialMetrics);
+    setLogs(generateInitialLogs());
+    setMetrics(generateInitialMetrics());
   };
 
   const handleSimulateIncident = () => {
