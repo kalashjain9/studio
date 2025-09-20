@@ -17,6 +17,8 @@ export type FirstResponderIncidentDiagnosisInput = z.infer<typeof FirstResponder
 
 const FirstResponderIncidentDiagnosisOutputSchema = z.object({
   diagnosisReport: z.string().describe('The diagnosis report of the incident.'),
+  deploymentName: z.string().describe('The name of the affected deployment.'),
+  namespace: z.string().describe('The Kubernetes namespace of the application.'),
 });
 export type FirstResponderIncidentDiagnosisOutput = z.infer<typeof FirstResponderIncidentDiagnosisOutputSchema>;
 
@@ -32,7 +34,6 @@ const getPodStatus = ai.defineTool({
   }),
   outputSchema: z.string(),
 }, async (input) => {
-  // TODO: Implement the actual logic to retrieve pod status using kubectl or similar.
   // This is a placeholder implementation.
   return `Pod status for namespace ${input.namespace}: All pods are running.`;
 });
@@ -45,7 +46,6 @@ const getPodLogs = ai.defineTool({
   }),
   outputSchema: z.string(),
 }, async (input) => {
-  // TODO: Implement the actual logic to retrieve pod logs using kubectl or similar.
   // This is a placeholder implementation.
   return `Logs for pod ${input.podName}: No errors found.`;
 });
@@ -58,7 +58,6 @@ const describeDeployment = ai.defineTool({
   }),
   outputSchema: z.string(),
 }, async (input) => {
-  // TODO: Implement the actual logic to describe the deployment using kubectl or similar.
   // This is a placeholder implementation.
   return `Deployment details for ${input.deploymentName}: No recent changes.`;
 });
@@ -70,16 +69,20 @@ const prompt = ai.definePrompt({
   tools: [getPodStatus, getPodLogs, describeDeployment],
   prompt: `You are the First Responder agent, a digital detective responsible for diagnosing incidents in a Kubernetes environment.
 
-  An incident has been detected, and you need to determine the root cause.
+  An incident has been detected, and you need to determine the root cause, the affected deployment name, and the namespace.
   You have access to tools to retrieve pod status, pod logs, and deployment details.
-  Use these tools to investigate the incident and compile a concise diagnosis report.
+  Use these tools to investigate the incident. Assume the deployment name is 'my-app' and the namespace is 'production'.
 
   Here is the incident report from the Sentinel agent:
   {{incidentReport}}
 
-  Think step by step. First, check the status of the application pods. If a pod is crashing, get the logs from that pod. Then, check the deployment history.
-  Finally, compile a diagnosis report summarizing your findings.
-  Output must be a diagnosis report that concisely describes the root cause of the issue.
+  Think step by step.
+  1.  Identify the namespace and deployment name.
+  2.  Check the status of the application pods in that namespace.
+  3.  If a pod is crashing, get the logs from that pod.
+  4.  Check the deployment history for the identified deployment.
+  5.  Finally, compile a diagnosis report summarizing your findings and output the deploymentName and namespace.
+  Output must be a diagnosis report that concisely describes the root cause of the issue, along with the deploymentName and namespace.
 `,
   model: 'googleai/gemini-1.5-pro-latest',
 });

@@ -1,4 +1,3 @@
-// src/ai/flows/commander-remediation-planning.ts
 'use server';
 
 /**
@@ -19,6 +18,8 @@ const CommanderRemediationPlanningInputSchema = z.object({
     .describe(
       'A detailed diagnostic report of the incident from the First Responder agent.'
     ),
+  deploymentName: z.string().describe('The name of the affected deployment.'),
+  namespace: z.string().describe('The Kubernetes namespace of the application.'),
 });
 export type CommanderRemediationPlanningInput = z.infer<
   typeof CommanderRemediationPlanningInputSchema
@@ -53,9 +54,11 @@ Based on your training and the context provided in this prompt, formulate a clea
 Diagnostic Report:
 {{{diagnosticReport}}}
 
-What is the best course of action? Explain the decision and provide a clear, structured plan for remediation.
+The affected deployment is '{{{deploymentName}}}' in the '{{{namespace}}}' namespace.
+
+What is the best course of action? Explain the decision and provide a clear, structured plan for remediation that includes the specific deployment and namespace.
 `,
-  model: 'googleai/gemini-1.5-pro',
+  model: 'googleai/gemini-1.5-pro-latest',
 });
 
 const commanderRemediationPlanningFlow = ai.defineFlow(

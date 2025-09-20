@@ -57,8 +57,8 @@ latency{pod="${podName}"}: ${lat}ms`;
 const incidentReport = "A memory leak was detected in the production environment following the last deployment. Pods are crashing and restarting repeatedly with 'OutOfMemoryError' errors.";
 
 export function Dashboard() {
-  const [logs, setLogs] = useState(generateInitialLogs);
-  const [metrics, setMetrics] = useState(generateInitialMetrics);
+  const [logs, setLogs] = useState(generateInitialLogs());
+  const [metrics, setMetrics] = useState(generateInitialMetrics());
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [steps, setSteps] = useState<Step[]>([]);
@@ -113,7 +113,11 @@ export function Dashboard() {
         currentSteps = [...currentSteps, { agent: 'Commander', title: 'Formulating a remediation plan...', content: '', status: 'in-progress' }];
         setSteps([...currentSteps]);
         
-        const planResult = await runCommanderRemediationPlanning({ diagnosticReport: diagnosisResult.diagnosisReport });
+        const planResult = await runCommanderRemediationPlanning({ 
+          diagnosticReport: diagnosisResult.diagnosisReport,
+          deploymentName: diagnosisResult.deploymentName,
+          namespace: diagnosisResult.namespace,
+        });
         if (!planResult || !planResult.remediationPlan) throw new Error('Commander failed to create a remediation plan.');
 
         currentSteps[2] = { ...currentSteps[2], status: 'completed', title: 'Remediation Plan Created', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{planResult.remediationPlan}</pre> };
