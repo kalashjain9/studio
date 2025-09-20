@@ -53,7 +53,7 @@ const getPodLogs = ai.defineTool({
 
 const describeDeployment = ai.defineTool({
   name: 'describeDeployment',
-  description: 'Retrieves the deployment history and details.',
+  description: 'Retrierives the deployment history and details.',
   inputSchema: z.object({
     deploymentName: z.string().describe('The name of the deployment to describe.'),
   }),
