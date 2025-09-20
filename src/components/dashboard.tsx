@@ -170,7 +170,7 @@ const getRandomScenario = () => {
 const RemediationPlan = ({ plan }: { plan: CommanderRemediationPlanningOutput['remediationPlan'] }) => {
     return (
         <div className="space-y-4 text-sm">
-            <Card className="bg-muted">
+            <Card className="bg-muted/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
                         <ShieldAlert className="h-5 w-5 text-destructive" />
@@ -182,7 +182,7 @@ const RemediationPlan = ({ plan }: { plan: CommanderRemediationPlanningOutput['r
                     <p><strong>Root Cause:</strong> {plan.rootCause}</p>
                 </CardContent>
             </Card>
-             <Card className="bg-muted">
+             <Card className="bg-muted/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
                        <ListChecks className="h-5 w-5 text-primary" />
@@ -196,7 +196,7 @@ const RemediationPlan = ({ plan }: { plan: CommanderRemediationPlanningOutput['r
                     </ol>
                 </CardContent>
             </Card>
-             <Card className="bg-muted">
+             <Card className="bg-muted/50">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
                         <Undo2 className="h-5 w-5 text-muted-foreground" />
@@ -262,7 +262,7 @@ export function Dashboard() {
             return;
           }
 
-          currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'Anomaly Detected!', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{incidentReport}</pre> };
+          currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'Anomaly Detected!', content: <pre className="font-code text-sm p-3 bg-muted/50 border rounded-md whitespace-pre-wrap">{incidentReport}</pre> };
           setSteps([...currentSteps]);
 
           // Step 2: First Responder
@@ -272,7 +272,7 @@ export function Dashboard() {
           const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport: incidentReport, sampleCode: currentScenario.sampleCode });
           if (!diagnosisResult || !diagnosisResult.diagnosisReport) throw new Error('First Responder failed to provide a diagnosis.');
           
-          currentSteps[1] = { ...currentSteps[1], status: 'completed', title: 'Root Cause Analysis Complete', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{diagnosisResult.diagnosisReport}</pre>};
+          currentSteps[1] = { ...currentSteps[1], status: 'completed', title: 'Root Cause Analysis Complete', content: <pre className="font-code text-sm p-3 bg-muted/50 border rounded-md whitespace-pre-wrap">{diagnosisResult.diagnosisReport}</pre>};
           setSteps([...currentSteps]);
           
           // Step 3: Commander
@@ -300,7 +300,7 @@ export function Dashboard() {
           if (!executionResult || !executionResult.executionResult) throw new Error('Engineer failed to generate the fix.');
 
           const fixedCode = executionResult.executionResult;
-          currentSteps[3] = { ...currentSteps[3], status: 'completed', title: 'Code Fix Generated', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{fixedCode}</pre> };
+          currentSteps[3] = { ...currentSteps[3], status: 'completed', title: 'Code Fix Generated', content: <pre className="font-code text-sm p-3 bg-muted/50 border rounded-md whitespace-pre-wrap">{fixedCode}</pre> };
           setSteps([...currentSteps]);
           setSampleCode(fixedCode); // Real-time update of the code
 
@@ -315,7 +315,7 @@ export function Dashboard() {
           });
           if (!reportResult || !reportResult.summaryReport) throw new Error('Communicator failed to generate a report.');
           
-          currentSteps[4] = { ...currentSteps[4], status: 'completed', title: 'Incident Report', content: <p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportResult.summaryReport}</p> };
+          currentSteps[4] = { ...currentSteps[4], status: 'completed', title: 'Incident Report', content: <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-muted/50 border rounded-md">{reportResult.summaryReport}</p> };
           setSteps([...currentSteps]);
           
           setOverallStatus('resolved');
@@ -373,7 +373,7 @@ export function Dashboard() {
                 value={sampleCode}
                 onChange={(e) => setSampleCode(e.target.value)}
                 rows={14}
-                className="font-code text-xs bg-muted"
+                className="font-code text-xs bg-muted/50"
               />
             </div>
             <div className="space-y-4">
@@ -384,7 +384,7 @@ export function Dashboard() {
                   value={logs} 
                   onChange={(e) => setLogs(e.target.value)}
                   rows={6} 
-                  className="font-code text-xs bg-muted" 
+                  className="font-code text-xs bg-muted/50" 
                 />
                 </div>
                 <div className="space-y-2">
@@ -394,7 +394,7 @@ export function Dashboard() {
                   value={metrics} 
                   onChange={(e) => setMetrics(e.target.value)}
                   rows={6} 
-                  className="font-code text-xs bg-muted" 
+                  className="font-code text-xs bg-muted/50" 
                 />
                 </div>
             </div>
@@ -424,23 +424,29 @@ export function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="relative space-y-8">
-              <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-border" aria-hidden="true" />
+            <div className="relative space-y-2">
+              <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-border -translate-x-1/2" aria-hidden="true" />
               {steps.map((step, index) => {
                 const AgentIcon = agentIcons[step.agent];
                 return (
-                  <div key={index} className="flex items-start gap-4">
-                    <div className={cn("flex-shrink-0 z-10 w-12 h-12 rounded-full bg-card border-2 flex items-center justify-center", 
-                        step.status === 'in-progress' && 'border-primary',
+                  <div key={index} className="relative flex items-start gap-4">
+                    <div className={cn("flex-shrink-0 z-10 w-12 h-12 rounded-full bg-background border-2 flex items-center justify-center", 
+                        step.status === 'in-progress' && 'border-primary animate-pulse',
                         step.status === 'completed' && 'border-success',
                         step.status === 'error' && 'border-destructive'
                     )}>
                       {step.status === 'in-progress' ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : <AgentIcon className="h-6 w-6 text-foreground" />}
                     </div>
-                    <div className="flex-grow pt-1.5">
-                      <p className="font-semibold">{step.agent}</p>
-                      <h3 className="font-medium text-foreground">{step.title}</h3>
-                      <div className="mt-2 text-sm">{step.content}</div>
+                    <div className="flex-grow pt-1.5 w-full">
+                       <p className="font-semibold text-sm text-muted-foreground">{step.agent}</p>
+                       <Card className="mt-1">
+                            <CardHeader className="p-4">
+                               <CardTitle className="text-base">{step.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-0">
+                                {step.content}
+                            </CardContent>
+                        </Card>
                     </div>
                   </div>
                 );
@@ -448,17 +454,17 @@ export function Dashboard() {
               <div ref={endOfStepsRef} />
             </div>
 
-            {overallStatus === 'resolved' && steps.some(s => s.status === 'completed') && !steps.some(s => s.status !== 'completed') &&
-                <div className="mt-8 text-center">
+            {overallStatus === 'resolved' && steps.every(s => s.status === 'completed') &&
+                <div className="mt-8 text-center p-6 bg-success/10 rounded-lg">
                     <PartyPopper className="mx-auto h-12 w-12 text-success"/>
-                    <h3 className="mt-2 text-lg font-medium">Incident Successfully Resolved</h3>
+                    <h3 className="mt-2 text-lg font-medium text-success-foreground">Incident Successfully Resolved</h3>
                     <p className="text-muted-foreground">All systems are back to normal.</p>
                 </div>
             }
              {overallStatus === 'error' &&
-                <div className="mt-8 text-center">
+                <div className="mt-8 text-center p-6 bg-destructive/10 rounded-lg">
                     <AlertTriangle className="mx-auto h-12 w-12 text-destructive"/>
-                    <h3 className="mt-2 text-lg font-medium">Process Stopped Due to an Error</h3>
+                    <h3 className="mt-2 text-lg font-medium text-destructive">Process Stopped Due to an Error</h3>
                     <p className="text-muted-foreground">Please review the logs and try again.</p>
                 </div>
             }
