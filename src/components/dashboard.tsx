@@ -77,6 +77,11 @@ export function Dashboard() {
   };
 
   const handleSimulateIncident = () => {
+    const newLogs = generateInitialLogs();
+    const newMetrics = generateInitialMetrics();
+    setLogs(newLogs);
+    setMetrics(newMetrics);
+
     startTransition(async () => {
       setOverallStatus('in-progress');
       let currentSteps: Step[] = [];
@@ -86,7 +91,7 @@ export function Dashboard() {
         currentSteps = [{ agent: 'Sentinel', title: 'Analyzing logs and metrics for anomalies...', content: '', status: 'in-progress' }];
         setSteps([...currentSteps]);
         
-        const anomalyResult = await runDetectAnomaly({ logs, metrics });
+        const anomalyResult = await runDetectAnomaly({ logs: newLogs, metrics: newMetrics });
         
         if (!anomalyResult.isAnomaly) {
           currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'No anomalies detected. Systems are stable.', content: <p className="text-sm text-muted-foreground">Sentinel continues to monitor the system.</p> };
