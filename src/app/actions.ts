@@ -56,14 +56,14 @@ export async function updateAgentModel(agentName: AgentName, model: string) {
         
         const modelRegex = /model: 'googleai\/([^']*)'/;
         if (modelRegex.test(fileContent)) {
-            fileContent = fileContent.replace(modelRegex, `model: '${model}'`);
+            fileContent = fileContent.replace(modelRegex, `model: 'googleai/${model}'`);
             await fs.writeFile(filePath, fileContent, 'utf-8');
             return { success: true };
         } else {
             // Fallback for different model definition syntax
             const modelRegex2 = /model: '([^']*)'/;
              if (modelRegex2.test(fileContent)) {
-                fileContent = fileContent.replace(modelRegex2, `model: '${model}'`);
+                fileContent = fileContent.replace(modelRegex2, `model: 'googleai/${model}'`);
                 await fs.writeFile(filePath, fileContent, 'utf-8');
                 return { success: true };
             }

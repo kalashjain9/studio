@@ -18,19 +18,21 @@ const CommanderRemediationPlanningInputSchema = z.object({
     .describe(
       'A detailed diagnostic report of the incident from the First Responder agent.'
     ),
-  deploymentName: z.string().describe('The name of the affected deployment.'),
-  namespace: z.string().describe('The Kubernetes namespace of the application.'),
+  deploymentName: z.string().describe('The name of the affected deployment.').optional(),
+  namespace: z.string().describe('The Kubernetes namespace of the application.').optional(),
 });
 export type CommanderRemediationPlanningInput = z.infer<
   typeof CommanderRemediationPlanningInputSchema
 >;
 
 const CommanderRemediationPlanningOutputSchema = z.object({
-  remediationPlan: z
-    .string()
-    .describe(
-      'A structured plan outlining the best course of action to remediate the incident, such as rolling back a deployment.'
-    ),
+  remediationPlan: z.object({
+      incident: z.string().describe('A brief summary of the incident.'),
+      rootCause: z.string().describe('The root cause of the incident.'),
+      solution: z.string().describe('A summary of the proposed solution.'),
+      plan: z.array(z.string()).describe('A step-by-step plan for remediation.'),
+      rollbackPlan: z.string().describe('A contingency plan for rolling back the changes if needed.'),
+  }).describe('A structured plan outlining the best course of action to remediate the incident.')
 });
 export type CommanderRemediationPlanningOutput = z.infer<
   typeof CommanderRemediationPlanningOutputSchema
@@ -56,7 +58,7 @@ Diagnostic Report:
 
 The affected deployment is '{{{deploymentName}}}' in the '{{{namespace}}}' namespace.
 
-What is the best course of action? Explain the decision and provide a clear, structured plan for remediation that includes the specific deployment and namespace.
+What is the best course of action? Explain the decision and provide a clear, structured plan for remediation.
 `,
   model: 'googleai/gemini-1.5-pro-latest',
 });

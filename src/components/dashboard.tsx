@@ -15,8 +15,9 @@ import {
 } from '@/app/actions';
 import { agentIcons, AgentName } from './agent-icons';
 import { Badge } from './ui/badge';
-import { Loader2, Sparkles, AlertTriangle, PartyPopper, RotateCcw, Code } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle, PartyPopper, RotateCcw, Code, ListChecks, ShieldAlert, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { CommanderRemediationPlanningOutput } from '@/ai/flows/commander-remediation-planning';
 
 type Step = {
   agent: AgentName;
@@ -53,8 +54,8 @@ function MyComponent() {
 
   return <div>Count: {count}</div>;
 }`,
-    generateLogs: () => `[ERROR] Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.`,
-    generateMetrics: () => `cpu_usage{component="MyComponent"}: 99%\nmemory_usage{component="MyComponent"}: 50%\ncomponent_render_rate{component="MyComponent"}: 1000/s`,
+    generateLogs: () => `[${new Date().toISOString()}] [ERROR] Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.`,
+    generateMetrics: () => `cpu_usage{component="MyComponent"}: ${Math.floor(Math.random() * 10) + 90}%\nmemory_usage{component="MyComponent"}: ${Math.floor(Math.random() * 20) + 40}%\ncomponent_render_rate{component="MyComponent"}: ${Math.floor(Math.random() * 500) + 800}/s`,
   },
   {
     type: 'Incorrect State Update',
@@ -97,10 +98,10 @@ function ShoppingCart() {
     </div>
   );
 }`,
-    generateLogs: () => `[INFO] User action: addItem. Payload: 'Apple'. State changed.
-[INFO] User action: addItem. Payload: 'Banana'. State changed.
-[WARN] Previous state was overwritten. Cart had 1 item(s), now has 1 item(s). Potential state management issue detected.`,
-    generateMetrics: () => `state_size{component="ShoppingCart"}: 1\nactions_dispatched{action="addItem"}: 5\nstate_resets{component="ShoppingCart"}: 4`,
+    generateLogs: () => `[${new Date().toISOString()}] [INFO] User action: addItem. Payload: 'Apple'. State changed.
+[${new Date(new Date().getTime() + 1000).toISOString()}] [INFO] User action: addItem. Payload: 'Banana'. State changed.
+[${new Date(new Date().getTime() + 1100).toISOString()}] [WARN] Previous state was overwritten. Cart had 1 item(s), now has 1 item(s). Potential state management issue detected.`,
+    generateMetrics: () => `state_size{component="ShoppingCart"}: 1\nactions_dispatched{action="addItem"}: ${Math.floor(Math.random() * 5) + 2}\nstate_resets{component="ShoppingCart"}: ${Math.floor(Math.random() * 5) + 1}`,
   },
     {
     type: 'API Data Fetching Error',
@@ -153,10 +154,10 @@ function UserProfile({ userId }) {
     </div>
   );
 }`,
-    generateLogs: () => `[ERROR] TypeError: Cannot read properties of null (reading 'name') at UserProfile.
-[INFO] Component 'UserProfile' rendering with props: {userId: '123'}.
-[ERROR] Unhandled Promise Rejection: API call to '/api/users/123' failed.`,
-    generateMetrics: () => `api_error_rate{endpoint="/api/users/:id"}: 100%\ncomponent_crash_rate{component="UserProfile"}: 100%\nresponse_time{endpoint="/api/users/:id"}: 50ms`,
+    generateLogs: () => `[${new Date().toISOString()}] [ERROR] TypeError: Cannot read properties of null (reading 'name') at UserProfile.
+[${new Date(new Date().getTime() - 100).toISOString()}] [INFO] Component 'UserProfile' rendering with props: {userId: '123'}.
+[${new Date(new Date().getTime() + 50).toISOString()}] [ERROR] Unhandled Promise Rejection: API call to '/api/users/123' failed.`,
+    generateMetrics: () => `api_error_rate{endpoint="/api/users/:id"}: 100%\ncomponent_crash_rate{component="UserProfile"}: 100%\nresponse_time{endpoint="/api/users/:id"}: ${Math.floor(Math.random() * 100) + 50}ms`,
   },
 ];
 
@@ -165,6 +166,51 @@ const getRandomScenario = () => {
     const randomIndex = Math.floor(Math.random() * scenarios.length);
     return scenarios[randomIndex];
 };
+
+const RemediationPlan = ({ plan }: { plan: CommanderRemediationPlanningOutput['remediationPlan'] }) => {
+    return (
+        <div className="space-y-4 text-sm">
+            <Card className="bg-muted">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <ShieldAlert className="h-5 w-5 text-destructive" />
+                        Incident & Root Cause
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p><strong>Incident:</strong> {plan.incident}</p>
+                    <p><strong>Root Cause:</strong> {plan.rootCause}</p>
+                </CardContent>
+            </Card>
+             <Card className="bg-muted">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                       <ListChecks className="h-5 w-5 text-primary" />
+                        Remediation Plan
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="mb-2"><strong>Solution:</strong> {plan.solution}</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                        {plan.plan.map((step, index) => <li key={index}>{step}</li>)}
+                    </ol>
+                </CardContent>
+            </Card>
+             <Card className="bg-muted">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <Undo2 className="h-5 w-5 text-muted-foreground" />
+                        Rollback Plan
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>{plan.rollbackPlan}</p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+};
+
 
 export function Dashboard() {
   const [currentScenario, setCurrentScenario] = useState(() => getRandomScenario());
@@ -194,98 +240,102 @@ export function Dashboard() {
   const handleSimulateIncident = () => {
     startTransition(async () => {
       handleReset(); // Get new data for the new simulation
-      setOverallStatus('in-progress');
-      let currentSteps: Step[] = [];
-      const incidentReport = "An incident has been reported based on the provided logs and metrics.";
+      
+      // We need to wait for the state to update before starting the simulation
+      setTimeout(async () => {
+        setOverallStatus('in-progress');
+        let currentSteps: Step[] = [];
+        const incidentReport = currentScenario.incidentReport;
 
-      try {
-        // Step 1: Sentinel
-        currentSteps = [{ agent: 'Sentinel', title: 'Analyzing logs and metrics for anomalies...', content: '', status: 'in-progress' }];
-        setSteps([...currentSteps]);
-        
-        const anomalyResult = await runDetectAnomaly({ logs, metrics });
-        
-        if (!anomalyResult.isAnomaly) {
-          currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'No anomalies detected. Systems are stable.', content: <p className="text-sm text-muted-foreground">Sentinel continues to monitor the system.</p> };
+        try {
+          // Step 1: Sentinel
+          currentSteps = [{ agent: 'Sentinel', title: 'Analyzing logs and metrics for anomalies...', content: '', status: 'in-progress' }];
           setSteps([...currentSteps]);
-          setOverallStatus('resolved');
-          toast({ title: "System Check Complete", description: "No anomalies were found." });
-          return;
-        }
-
-        currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'Anomaly Detected!', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{incidentReport}</pre> };
-        setSteps([...currentSteps]);
-
-        // Step 2: First Responder
-        currentSteps = [...currentSteps, { agent: 'First Responder', title: 'Diagnosing the root cause...', content: '', status: 'in-progress' }];
-        setSteps([...currentSteps]);
-
-        const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport: incidentReport, sampleCode });
-        if (!diagnosisResult || !diagnosisResult.diagnosisReport) throw new Error('First Responder failed to provide a diagnosis.');
-        
-        currentSteps[1] = { ...currentSteps[1], status: 'completed', title: 'Root Cause Analysis Complete', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{diagnosisResult.diagnosisReport}</pre>};
-        setSteps([...currentSteps]);
-        
-        // Step 3: Commander
-        currentSteps = [...currentSteps, { agent: 'Commander', title: 'Formulating a remediation plan...', content: '', status: 'in-progress' }];
-        setSteps([...currentSteps]);
-        
-        const planResult = await runCommanderRemediationPlanning({ 
-          diagnosticReport: diagnosisResult.diagnosisReport,
-          deploymentName: diagnosisResult.deploymentName || 'N/A',
-          namespace: diagnosisResult.namespace || 'N/A',
-        });
-        if (!planResult || !planResult.remediationPlan) throw new Error('Commander failed to create a remediation plan.');
-
-        currentSteps[2] = { ...currentSteps[2], status: 'completed', title: 'Remediation Plan Created', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{planResult.remediationPlan}</pre> };
-        setSteps([...currentSteps]);
-        
-        // Step 4: Engineer
-        currentSteps = [...currentSteps, { agent: 'Engineer', title: 'Generating the code fix...', content: '', status: 'in-progress' }];
-        setSteps([...currentSteps]);
-        
-        const executionResult = await runEngineerCommandExecution({ 
-          remediationPlan: planResult.remediationPlan,
-          codeToFix: sampleCode,
-        });
-        if (!executionResult || !executionResult.executionResult) throw new Error('Engineer failed to generate the fix.');
-
-        const fixedCode = executionResult.executionResult;
-        currentSteps[3] = { ...currentSteps[3], status: 'completed', title: 'Code Fix Generated', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{fixedCode}</pre> };
-        setSteps([...currentSteps]);
-        setSampleCode(fixedCode); // Real-time update of the code
-
-        // Step 5: Communicator
-        currentSteps = [...currentSteps, { agent: 'Communicator', title: 'Generating incident summary report...', content: '', status: 'in-progress' }];
-        setSteps([...currentSteps]);
-        
-        const reportResult = await runCommunicatorIncidentReporting({
-          incidentDetection: incidentReport,
-          diagnosisReport: diagnosisResult.diagnosisReport,
-          remediationSteps: `The following code fix was generated:\n${fixedCode}`
-        });
-        if (!reportResult || !reportResult.summaryReport) throw new Error('Communicator failed to generate a report.');
-        
-        currentSteps[4] = { ...currentSteps[4], status: 'completed', title: 'Incident Report', content: <p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportResult.summaryReport}</p> };
-        setSteps([...currentSteps]);
-        
-        setOverallStatus('resolved');
-        toast({ title: "Incident Resolved", description: "The autonomous SRE team has resolved the incident." });
-
-      } catch (error: any) {
-        const errorMessage = error.message || "An unknown error occurred.";
-        const lastStepIndex = currentSteps.length - 1;
-        if (lastStepIndex >= 0) {
-            currentSteps[lastStepIndex] = {...currentSteps[lastStepIndex], status: 'error', title: 'An error occurred', content: <p className="text-destructive">{errorMessage}</p>};
+          
+          const anomalyResult = await runDetectAnomaly({ logs: currentScenario.generateLogs(), metrics: currentScenario.generateMetrics() });
+          
+          if (!anomalyResult.isAnomaly) {
+            currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'No anomalies detected. Systems are stable.', content: <p className="text-sm text-muted-foreground">Sentinel continues to monitor the system.</p> };
             setSteps([...currentSteps]);
+            setOverallStatus('resolved');
+            toast({ title: "System Check Complete", description: "No anomalies were found." });
+            return;
+          }
+
+          currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'Anomaly Detected!', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{incidentReport}</pre> };
+          setSteps([...currentSteps]);
+
+          // Step 2: First Responder
+          currentSteps = [...currentSteps, { agent: 'First Responder', title: 'Diagnosing the root cause...', content: '', status: 'in-progress' }];
+          setSteps([...currentSteps]);
+
+          const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport: incidentReport, sampleCode: currentScenario.sampleCode });
+          if (!diagnosisResult || !diagnosisResult.diagnosisReport) throw new Error('First Responder failed to provide a diagnosis.');
+          
+          currentSteps[1] = { ...currentSteps[1], status: 'completed', title: 'Root Cause Analysis Complete', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{diagnosisResult.diagnosisReport}</pre>};
+          setSteps([...currentSteps]);
+          
+          // Step 3: Commander
+          currentSteps = [...currentSteps, { agent: 'Commander', title: 'Formulating a remediation plan...', content: '', status: 'in-progress' }];
+          setSteps([...currentSteps]);
+          
+          const planResult = await runCommanderRemediationPlanning({ 
+            diagnosticReport: diagnosisResult.diagnosisReport,
+            deploymentName: diagnosisResult.deploymentName,
+            namespace: diagnosisResult.namespace,
+          });
+          if (!planResult || !planResult.remediationPlan) throw new Error('Commander failed to create a remediation plan.');
+
+          currentSteps[2] = { ...currentSteps[2], status: 'completed', title: 'Remediation Plan Created', content: <RemediationPlan plan={planResult.remediationPlan} /> };
+          setSteps([...currentSteps]);
+          
+          // Step 4: Engineer
+          currentSteps = [...currentSteps, { agent: 'Engineer', title: 'Generating the code fix...', content: '', status: 'in-progress' }];
+          setSteps([...currentSteps]);
+          
+          const executionResult = await runEngineerCommandExecution({ 
+            remediationPlan: `Incident: ${planResult.remediationPlan.incident}\nRoot Cause: ${planResult.remediationPlan.rootCause}\nSolution: ${planResult.remediationPlan.solution}`,
+            codeToFix: sampleCode,
+          });
+          if (!executionResult || !executionResult.executionResult) throw new Error('Engineer failed to generate the fix.');
+
+          const fixedCode = executionResult.executionResult;
+          currentSteps[3] = { ...currentSteps[3], status: 'completed', title: 'Code Fix Generated', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{fixedCode}</pre> };
+          setSteps([...currentSteps]);
+          setSampleCode(fixedCode); // Real-time update of the code
+
+          // Step 5: Communicator
+          currentSteps = [...currentSteps, { agent: 'Communicator', title: 'Generating incident summary report...', content: '', status: 'in-progress' }];
+          setSteps([...currentSteps]);
+          
+          const reportResult = await runCommunicatorIncidentReporting({
+            incidentDetection: incidentReport,
+            diagnosisReport: diagnosisResult.diagnosisReport,
+            remediationSteps: `The following code fix was generated:\n${fixedCode}`
+          });
+          if (!reportResult || !reportResult.summaryReport) throw new Error('Communicator failed to generate a report.');
+          
+          currentSteps[4] = { ...currentSteps[4], status: 'completed', title: 'Incident Report', content: <p className="text-sm text-muted-foreground whitespace-pre-wrap">{reportResult.summaryReport}</p> };
+          setSteps([...currentSteps]);
+          
+          setOverallStatus('resolved');
+          toast({ title: "Incident Resolved", description: "The autonomous SRE team has resolved the incident." });
+
+        } catch (error: any) {
+          const errorMessage = error.message || "An unknown error occurred.";
+          const lastStepIndex = currentSteps.length - 1;
+          if (lastStepIndex >= 0) {
+              currentSteps[lastStepIndex] = {...currentSteps[lastStepIndex], status: 'error', title: 'An error occurred', content: <p className="text-destructive">{errorMessage}</p>};
+              setSteps([...currentSteps]);
+          }
+          setOverallStatus('error');
+          toast({
+            variant: "destructive",
+            title: "An Error Occurred",
+            description: errorMessage,
+          });
         }
-        setOverallStatus('error');
-        toast({
-          variant: "destructive",
-          title: "An Error Occurred",
-          description: errorMessage,
-        });
-      }
+      }, 50); // Small delay to allow state to update
     });
   };
   
