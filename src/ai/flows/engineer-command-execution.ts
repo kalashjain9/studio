@@ -48,7 +48,7 @@ Buggy Code:
 \'\'\'
 
 Return only the fixed code, with no additional explanations or markdown formatting.`,
-  model: 'gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-flash-latest',
 });
 
 const engineerCommandExecutionFlow = ai.defineFlow(

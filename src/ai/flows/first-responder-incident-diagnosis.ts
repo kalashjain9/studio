@@ -87,7 +87,7 @@ Think step-by-step:
 3.  If this seems like an infrastructure issue, use your tools to investigate.
 4.  Compile a concise diagnosis report summarizing your findings. If you identify a specific deployment or namespace from your tool use, include them. If not, you can omit them.
 `,
-  model: 'gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-flash-latest',
 });
 
 const firstResponderIncidentDiagnosisFlow = ai.defineFlow(
