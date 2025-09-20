@@ -192,25 +192,17 @@ export function Dashboard() {
   };
 
   const handleSimulateIncident = () => {
-    const newScenario = getRandomScenario();
-    setCurrentScenario(newScenario);
-    const newLogs = newScenario.generateLogs();
-    const newMetrics = newScenario.generateMetrics();
-    const newCode = newScenario.sampleCode;
-    setLogs(newLogs);
-    setMetrics(newMetrics);
-    setSampleCode(newCode);
-    
     startTransition(async () => {
       setOverallStatus('in-progress');
       let currentSteps: Step[] = [];
+      const incidentReport = "An incident has been reported based on the provided logs and metrics.";
 
       try {
         // Step 1: Sentinel
         currentSteps = [{ agent: 'Sentinel', title: 'Analyzing logs and metrics for anomalies...', content: '', status: 'in-progress' }];
         setSteps([...currentSteps]);
         
-        const anomalyResult = await runDetectAnomaly({ logs: newLogs, metrics: newMetrics });
+        const anomalyResult = await runDetectAnomaly({ logs, metrics });
         
         if (!anomalyResult.isAnomaly) {
           currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'No anomalies detected. Systems are stable.', content: <p className="text-sm text-muted-foreground">Sentinel continues to monitor the system.</p> };
@@ -220,14 +212,14 @@ export function Dashboard() {
           return;
         }
 
-        currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'Anomaly Detected!', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{newScenario.incidentReport}</pre> };
+        currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'Anomaly Detected!', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{incidentReport}</pre> };
         setSteps([...currentSteps]);
 
         // Step 2: First Responder
         currentSteps = [...currentSteps, { agent: 'First Responder', title: 'Diagnosing the root cause...', content: '', status: 'in-progress' }];
         setSteps([...currentSteps]);
 
-        const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport: newScenario.incidentReport, sampleCode: newCode });
+        const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport: incidentReport, sampleCode });
         if (!diagnosisResult || !diagnosisResult.diagnosisReport) throw new Error('First Responder failed to provide a diagnosis.');
         
         currentSteps[1] = { ...currentSteps[1], status: 'completed', title: 'Root Cause Analysis Complete', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{diagnosisResult.diagnosisReport}</pre>};
@@ -253,21 +245,23 @@ export function Dashboard() {
         
         const executionResult = await runEngineerCommandExecution({ 
           remediationPlan: planResult.remediationPlan,
-          codeToFix: newCode,
+          codeToFix: sampleCode,
         });
         if (!executionResult || !executionResult.executionResult) throw new Error('Engineer failed to generate the fix.');
 
-        currentSteps[3] = { ...currentSteps[3], status: 'completed', title: 'Code Fix Generated', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{executionResult.executionResult}</pre> };
+        const fixedCode = executionResult.executionResult;
+        currentSteps[3] = { ...currentSteps[3], status: 'completed', title: 'Code Fix Generated', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{fixedCode}</pre> };
         setSteps([...currentSteps]);
+        setSampleCode(fixedCode); // Real-time update of the code
 
         // Step 5: Communicator
         currentSteps = [...currentSteps, { agent: 'Communicator', title: 'Generating incident summary report...', content: '', status: 'in-progress' }];
         setSteps([...currentSteps]);
         
         const reportResult = await runCommunicatorIncidentReporting({
-          incidentDetection: newScenario.incidentReport,
+          incidentDetection: incidentReport,
           diagnosisReport: diagnosisResult.diagnosisReport,
-          remediationSteps: `The following code fix was generated:\n${executionResult.executionResult}`
+          remediationSteps: `The following code fix was generated:\n${fixedCode}`
         });
         if (!reportResult || !reportResult.summaryReport) throw new Error('Communicator failed to generate a report.');
         
@@ -313,7 +307,7 @@ export function Dashboard() {
         <CardHeader>
           <CardTitle>Sentinel Monitoring</CardTitle>
           <CardDescription>
-            The Sentinel continuously analyzes logs and metrics from a sample application. Click &quot;Simulate Incident&quot; to generate a new scenario.
+            Input your own code, logs, and metrics, or use the "Reset" button to generate a new random scenario. Then click &quot;Simulate Incident&quot; to start.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -321,20 +315,36 @@ export function Dashboard() {
              <div className="space-y-2">
               <Label htmlFor="sample-code" className="flex items-center gap-2">
                 <Code className="h-4 w-4" />
-                Sample Code with Bug
+                Sample Code
               </Label>
-              <div className="rounded-md border bg-muted p-4">
-                <pre id="sample-code" className="font-code text-xs whitespace-pre-wrap">{sampleCode}</pre>
-              </div>
+               <Textarea
+                id="sample-code"
+                value={sampleCode}
+                onChange={(e) => setSampleCode(e.target.value)}
+                rows={14}
+                className="font-code text-xs bg-muted"
+              />
             </div>
             <div className="space-y-4">
                 <div className="space-y-2">
                 <Label htmlFor="logs">Logs</Label>
-                <Textarea id="logs" value={logs} readOnly rows={6} className="font-code text-xs bg-muted" />
+                <Textarea 
+                  id="logs" 
+                  value={logs} 
+                  onChange={(e) => setLogs(e.target.value)}
+                  rows={6} 
+                  className="font-code text-xs bg-muted" 
+                />
                 </div>
                 <div className="space-y-2">
                 <Label htmlFor="metrics">Metrics</Label>
-                <Textarea id="metrics" value={metrics} readOnly rows={6} className="font-code text-xs bg-muted" />
+                <Textarea 
+                  id="metrics" 
+                  value={metrics} 
+                  onChange={(e) => setMetrics(e.target.value)}
+                  rows={6} 
+                  className="font-code text-xs bg-muted" 
+                />
                 </div>
             </div>
           </div>
