@@ -12,13 +12,14 @@ import {z} from 'genkit';
 
 const FirstResponderIncidentDiagnosisInputSchema = z.object({
   incidentReport: z.string().describe('The incident report from the Sentinel agent.'),
+  sampleCode: z.string().describe('A sample of the potentially buggy code.').optional(),
 });
 export type FirstResponderIncidentDiagnosisInput = z.infer<typeof FirstResponderIncidentDiagnosisInputSchema>;
 
 const FirstResponderIncidentDiagnosisOutputSchema = z.object({
   diagnosisReport: z.string().describe('The diagnosis report of the incident.'),
-  deploymentName: z.string().describe('The name of the affected deployment.'),
-  namespace: z.string().describe('The Kubernetes namespace of the application.'),
+  deploymentName: z.string().describe('The name of the affected deployment.').optional(),
+  namespace: z.string().describe('The Kubernetes namespace of the application.').optional(),
 });
 export type FirstResponderIncidentDiagnosisOutput = z.infer<typeof FirstResponderIncidentDiagnosisOutputSchema>;
 
@@ -26,6 +27,8 @@ export async function firstResponderIncidentDiagnosis(input: FirstResponderIncid
   return firstResponderIncidentDiagnosisFlow(input);
 }
 
+// These tools are placeholders for a real environment.
+// In a real SRE scenario, these would execute actual kubectl commands.
 const getPodStatus = ai.defineTool({
   name: 'getPodStatus',
   description: 'Retrieves the status of the application pods.',
@@ -34,7 +37,6 @@ const getPodStatus = ai.defineTool({
   }),
   outputSchema: z.string(),
 }, async (input) => {
-  // This is a placeholder implementation.
   return `Pod status for namespace ${input.namespace}: All pods are running.`;
 });
 
@@ -46,7 +48,6 @@ const getPodLogs = ai.defineTool({
   }),
   outputSchema: z.string(),
 }, async (input) => {
-  // This is a placeholder implementation.
   return `Logs for pod ${input.podName}: No errors found.`;
 });
 
@@ -58,7 +59,6 @@ const describeDeployment = ai.defineTool({
   }),
   outputSchema: z.string(),
 }, async (input) => {
-  // This is a placeholder implementation.
   return `Deployment details for ${input.deploymentName}: No recent changes.`;
 });
 
@@ -67,22 +67,25 @@ const prompt = ai.definePrompt({
   input: {schema: FirstResponderIncidentDiagnosisInputSchema},
   output: {schema: FirstResponderIncidentDiagnosisOutputSchema},
   tools: [getPodStatus, getPodLogs, describeDeployment],
-  prompt: `You are the First Responder agent, a digital detective responsible for diagnosing incidents in a Kubernetes environment.
+  prompt: `You are the First Responder agent, a digital detective responsible for diagnosing incidents.
+An incident has been detected. Your job is to determine the root cause.
+Analyze the incident report, and if provided, the sample code.
 
-  An incident has been detected, and you need to determine the root cause, the affected deployment name, and the namespace.
-  You have access to tools to retrieve pod status, pod logs, and deployment details.
-  Use these tools to investigate the incident. Assume the deployment name is 'my-app' and the namespace is 'production'.
+Incident Report:
+{{{incidentReport}}}
 
-  Here is the incident report from the Sentinel agent:
-  {{incidentReport}}
+{{#if sampleCode}}
+Potentially Buggy Code:
+\'\'\'
+{{{sampleCode}}}
+\'\'\'
+{{/if}}
 
-  Think step by step.
-  1.  Identify the namespace and deployment name.
-  2.  Check the status of the application pods in that namespace.
-  3.  If a pod is crashing, get the logs from that pod.
-  4.  Check the deployment history for the identified deployment.
-  5.  Finally, compile a diagnosis report summarizing your findings and output the deploymentName and namespace.
-  Output must be a diagnosis report that concisely describes the root cause of the issue, along with the deploymentName and namespace.
+Think step-by-step:
+1.  Analyze the incident report and the code to form a hypothesis.
+2.  If this seems like a code-level bug, clearly state the problem in the code.
+3.  If this seems like an infrastructure issue, use your tools to investigate.
+4.  Compile a concise diagnosis report summarizing your findings. If you identify a specific deployment or namespace from your tool use, include them.
 `,
   model: 'googleai/gemini-1.5-pro-latest',
 });

@@ -15,7 +15,7 @@ import {
 } from '@/app/actions';
 import { agentIcons, AgentName } from './agent-icons';
 import { Badge } from './ui/badge';
-import { Loader2, Sparkles, AlertTriangle, PartyPopper, RotateCcw } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle, PartyPopper, RotateCcw, Code } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Step = {
@@ -27,90 +27,136 @@ type Step = {
 
 const scenarios = [
   {
-    type: 'Memory Leak',
-    incidentReport: "A memory leak was detected in the production environment. Pods are crashing and restarting repeatedly with 'OutOfMemoryError' errors.",
-    generateLogs: () => {
-      const now = new Date();
-      const randomMs = () => Math.floor(Math.random() * 50) + 50;
-      const podName = `my-app-pod-${Math.floor(Math.random() * 3) + 1}`;
-      return `[${now.toISOString()}] INFO: User login successful for user 'test'.
-[${new Date(now.getTime() + 15000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
-[${new Date(now.getTime() + 30000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
-[${new Date(now.getTime() + 45000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
-[${new Date(now.getTime() + 60000).toISOString()}] ERROR: OutOfMemoryError: Java heap space.
-[${new Date(now.getTime() + 61000).toISOString()}] CRITICAL: Pod '${podName}' is restarting.
-[${new Date(now.getTime() + 65000).toISOString()}] ERROR: OutOfMemoryError: Java heap space.
-[${new Date(now.getTime() + 66000).toISOString()}] CRITICAL: Pod '${podName}' is restarting.
-[${new Date(now.getTime() + 70000).toISOString()}] WARN: Liveness probe failed for pod '${podName}'.
-[${new Date(now.getTime() + 72000).toISOString()}] ERROR: OutOfMemoryError: Java heap space.
-[${new Date(now.getTime() + 73000).toISOString()}] CRITICAL: Pod '${podName}' is restarting.`;
-    },
-    generateMetrics: () => {
-        const podName = `my-app-pod-${Math.floor(Math.random() * 3) + 1}`;
-        const cpu = (Math.random() * (0.4 - 0.2) + 0.2).toFixed(1);
-        const mem = Math.floor(Math.random() * 10) + 90;
-        const traffic = (Math.random() * (2.5 - 1.0) + 1.0).toFixed(1);
-        const lat = Math.floor(Math.random() * 100) + 150;
-        return `cpu_usage{pod="${podName}"}: ${cpu}
-memory_usage{pod="${podName}"}: ${mem}%
-network_traffic{pod="${podName}"}: ${traffic}MB/s
-latency{pod="${podName}"}: ${lat}ms`;
-    },
+    type: 'Infinite Loop',
+    incidentReport: "The application is unresponsive, and CPU usage is at 100%. This is likely due to an infinite loop in a client-side component.",
+    sampleCode: `import { useEffect, useState } from 'react';
+
+function MyComponent() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    // BUG: This effect runs on every render, causing an infinite loop.
+    setCount(count + 1);
+  });
+
+  return <div>Count: {count}</div>;
+}`,
+    solution: `import { useEffect, useState } from 'react';
+
+function MyComponent() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    // FIX: Added an empty dependency array to run the effect only once.
+    setCount(count + 1);
+  }, []);
+
+  return <div>Count: {count}</div>;
+}`,
+    generateLogs: () => `[ERROR] Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.`,
+    generateMetrics: () => `cpu_usage{component="MyComponent"}: 99%\nmemory_usage{component="MyComponent"}: 50%\ncomponent_render_rate{component="MyComponent"}: 1000/s`,
   },
   {
-    type: 'CPU Spike',
-    incidentReport: "A sudden CPU spike is causing service degradation. The 'recommendation' service is experiencing high latency and timeouts.",
-    generateLogs: () => {
-        const now = new Date();
-        const podName = `recommendation-service-pod-${Math.floor(Math.random() * 2) + 1}`;
-        return `[${now.toISOString()}] INFO: Request to /recommendations received.
-[${new Date(now.getTime() + 5000).toISOString()}] WARN: High CPU usage detected on ${podName}.
-[${new Date(now.getTime() + 7000).toISOString()}] INFO: Request to /recommendations processed in 1200ms.
-[${new Date(now.getTime() + 15000).toISOString()}] WARN: CPU throttling applied to ${podName}.
-[${new Date(now.getTime() + 20000).toISOString()}] ERROR: Request to /recommendations timed out after 3000ms.
-[${new Date(now.getTime() + 22000).toISOString()}] WARN: High CPU usage detected on ${podName}.
-[${new Date(now.getTime() + 28000).toISOString()}] ERROR: Upstream service /users failed to respond.
-[${new Date(now.getTime() + 35000).toISOString()}] INFO: Scaling up replicas for recommendation-service deployment.`;
-    },
-    generateMetrics: () => {
-        const podName = `recommendation-service-pod-${Math.floor(Math.random() * 2) + 1}`;
-        const cpu = (Math.random() * (0.95 - 0.85) + 0.85).toFixed(2);
-        const mem = Math.floor(Math.random() * 15) + 50;
-        const traffic = (Math.random() * (1.5 - 0.5) + 0.5).toFixed(1);
-        const lat = Math.floor(Math.random() * 500) + 1500;
-        return `cpu_usage{pod="${podName}"}: ${cpu}
-memory_usage{pod="${podName}"}: ${mem}%
-network_traffic{pod="${podName}"}: ${traffic}MB/s
-latency{pod="${podName}"}: ${lat}ms`;
-    },
+    type: 'Incorrect State Update',
+    incidentReport: "A feature that's supposed to add items to a list is overwriting the list instead. Users report that they can only ever have one item in their cart.",
+    sampleCode: `import { useState } from 'react';
+
+function ShoppingCart() {
+  const [items, setItems] = useState([]);
+
+  const addItem = (item) => {
+    // BUG: This is overwriting the array instead of appending to it.
+    setItems([item]);
+  };
+
+  return (
+    <div>
+      <Button onClick={() => addItem('Apple')}>Add Apple</Button>
+      <ul>
+        {items.map((item, index) => <li key={index}>{item}</li>)}
+      </ul>
+    </div>
+  );
+}`,
+    solution: `import { useState } from 'react';
+
+function ShoppingCart() {
+  const [items, setItems] = useState([]);
+
+  const addItem = (item) => {
+    // FIX: Use a function update to correctly append the new item.
+    setItems(prevItems => [...prevItems, item]);
+  };
+
+  return (
+    <div>
+      <Button onClick={() => addItem('Apple')}>Add Apple</Button>
+      <ul>
+        {items.map((item, index) => <li key={index}>{item}</li>)}
+      </ul>
+    </div>
+  );
+}`,
+    generateLogs: () => `[INFO] User action: addItem. Payload: 'Apple'. State changed.
+[INFO] User action: addItem. Payload: 'Banana'. State changed.
+[WARN] Previous state was overwritten. Cart had 1 item(s), now has 1 item(s). Potential state management issue detected.`,
+    generateMetrics: () => `state_size{component="ShoppingCart"}: 1\nactions_dispatched{action="addItem"}: 5\nstate_resets{component="ShoppingCart"}: 4`,
   },
     {
-    type: 'Latency Issue',
-    incidentReport: "High database latency is causing slow API responses and a poor user experience. The 'orders' service is heavily impacted.",
-    generateLogs: () => {
-        const now = new Date();
-        const podName = `orders-service-pod-${Math.floor(Math.random() * 4) + 1}`;
-        return `[${now.toISOString()}] INFO: Processing new order #12345.
-[${new Date(now.getTime() + 2000).toISOString()}] WARN: DB query took 800ms to execute.
-[${new Date(now.getTime() + 5000).toISOString()}] INFO: API call to /api/orders processed in 1500ms.
-[${new Date(now.getTime() + 12000).toISOString()}] WARN: Connection pool to database is reaching its limit.
-[${new Date(now.getTime() + 18000).toISOString()}] ERROR: Failed to acquire database connection for pod ${podName}.
-[${new Date(now.getTime() + 25000).toISOString()}] INFO: API call to /api/orders processed in 2500ms.
-[${new Date(now.getTime() + 30000).toISOString()}] WARN: DB query took 1200ms to execute.
-[${new Date(now.getTime() + 45000).toISOString()}] ERROR: Transaction rollback for order #12348 due to timeout.`;
-    },
-    generateMetrics: () => {
-        const podName = `orders-service-pod-${Math.floor(Math.random() * 4) + 1}`;
-        const cpu = (Math.random() * (0.5 - 0.3) + 0.3).toFixed(1);
-        const mem = Math.floor(Math.random() * 10) + 60;
-        const traffic = (Math.random() * (0.8 - 0.4) + 0.4).toFixed(1);
-        const lat = Math.floor(Math.random() * 1000) + 2000;
-        return `cpu_usage{pod="${podName}"}: ${cpu}
-memory_usage{pod="${podName}"}: ${mem}%
-network_traffic{pod="${podName}"}: ${traffic}MB/s
-latency{pod="${podName}"}: ${lat}ms
-db_query_latency{service="orders-db"}: 950ms`;
-    },
+    type: 'API Data Fetching Error',
+    incidentReport: "The user profile page is failing to load data. The API call is not being handled correctly, causing a crash when the component tries to render null data.",
+    sampleCode: `import { useEffect, useState } from 'react';
+
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    fetch(\`/api/users/\${userId}\`)
+      .then(res => res.json())
+      .then(data => setUser(data));
+  }, [userId]);
+
+  // BUG: The component will crash if 'user' is null on the first render.
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </div>
+  );
+}`,
+    solution: `import { useEffect, useState } from 'react';
+
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(\`/api/users/\${userId}\`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch');
+        }
+        return res.json();
+      })
+      .then(data => setUser(data))
+      .catch(err => setError(err.message));
+  }, [userId]);
+
+  if (error) return <div>Error: {error}</div>;
+  // FIX: Add a loading state to prevent accessing null properties.
+  if (!user) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </div>
+  );
+}`,
+    generateLogs: () => `[ERROR] TypeError: Cannot read properties of null (reading 'name') at UserProfile.
+[INFO] Component 'UserProfile' rendering with props: {userId: '123'}.
+[ERROR] Unhandled Promise Rejection: API call to '/api/users/123' failed.`,
+    generateMetrics: () => `api_error_rate{endpoint="/api/users/:id"}: 100%\ncomponent_crash_rate{component="UserProfile"}: 100%\nresponse_time{endpoint="/api/users/:id"}: 50ms`,
   },
 ];
 
@@ -121,9 +167,10 @@ const getRandomScenario = () => {
 };
 
 export function Dashboard() {
-  const [currentScenario, setCurrentScenario] = useState(getRandomScenario());
+  const [currentScenario, setCurrentScenario] = useState(() => getRandomScenario());
   const [logs, setLogs] = useState(() => currentScenario.generateLogs());
   const [metrics, setMetrics] = useState(() => currentScenario.generateMetrics());
+  const [sampleCode, setSampleCode] = useState(() => currentScenario.sampleCode);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [steps, setSteps] = useState<Step[]>([]);
@@ -139,18 +186,20 @@ export function Dashboard() {
     setCurrentScenario(newScenario);
     setLogs(newScenario.generateLogs());
     setMetrics(newScenario.generateMetrics());
+    setSampleCode(newScenario.sampleCode);
     setSteps([]);
     setOverallStatus('idle');
   };
 
   const handleSimulateIncident = () => {
-    // Regenerate data on simulation start
     const newScenario = getRandomScenario();
     setCurrentScenario(newScenario);
     const newLogs = newScenario.generateLogs();
     const newMetrics = newScenario.generateMetrics();
+    const newCode = newScenario.sampleCode;
     setLogs(newLogs);
     setMetrics(newMetrics);
+    setSampleCode(newCode);
     
     startTransition(async () => {
       setOverallStatus('in-progress');
@@ -178,7 +227,7 @@ export function Dashboard() {
         currentSteps = [...currentSteps, { agent: 'First Responder', title: 'Diagnosing the root cause...', content: '', status: 'in-progress' }];
         setSteps([...currentSteps]);
 
-        const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport: newScenario.incidentReport });
+        const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport: newScenario.incidentReport, sampleCode: newCode });
         if (!diagnosisResult || !diagnosisResult.diagnosisReport) throw new Error('First Responder failed to provide a diagnosis.');
         
         currentSteps[1] = { ...currentSteps[1], status: 'completed', title: 'Root Cause Analysis Complete', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{diagnosisResult.diagnosisReport}</pre>};
@@ -190,8 +239,8 @@ export function Dashboard() {
         
         const planResult = await runCommanderRemediationPlanning({ 
           diagnosticReport: diagnosisResult.diagnosisReport,
-          deploymentName: diagnosisResult.deploymentName,
-          namespace: diagnosisResult.namespace,
+          deploymentName: diagnosisResult.deploymentName || 'N/A',
+          namespace: diagnosisResult.namespace || 'N/A',
         });
         if (!planResult || !planResult.remediationPlan) throw new Error('Commander failed to create a remediation plan.');
 
@@ -199,13 +248,16 @@ export function Dashboard() {
         setSteps([...currentSteps]);
         
         // Step 4: Engineer
-        currentSteps = [...currentSteps, { agent: 'Engineer', title: 'Executing the remediation plan...', content: '', status: 'in-progress' }];
+        currentSteps = [...currentSteps, { agent: 'Engineer', title: 'Generating the code fix...', content: '', status: 'in-progress' }];
         setSteps([...currentSteps]);
         
-        const executionResult = await runEngineerCommandExecution({ remediationPlan: planResult.remediationPlan });
-        if (!executionResult || !executionResult.executionResult) throw new Error('Engineer failed to execute the command.');
+        const executionResult = await runEngineerCommandExecution({ 
+          remediationPlan: planResult.remediationPlan,
+          codeToFix: newCode,
+        });
+        if (!executionResult || !executionResult.executionResult) throw new Error('Engineer failed to generate the fix.');
 
-        currentSteps[3] = { ...currentSteps[3], status: 'completed', title: 'Execution Complete', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{executionResult.executionResult}</pre> };
+        currentSteps[3] = { ...currentSteps[3], status: 'completed', title: 'Code Fix Generated', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{executionResult.executionResult}</pre> };
         setSteps([...currentSteps]);
 
         // Step 5: Communicator
@@ -215,7 +267,7 @@ export function Dashboard() {
         const reportResult = await runCommunicatorIncidentReporting({
           incidentDetection: newScenario.incidentReport,
           diagnosisReport: diagnosisResult.diagnosisReport,
-          remediationSteps: executionResult.executionResult
+          remediationSteps: `The following code fix was generated:\n${executionResult.executionResult}`
         });
         if (!reportResult || !reportResult.summaryReport) throw new Error('Communicator failed to generate a report.');
         
@@ -261,18 +313,29 @@ export function Dashboard() {
         <CardHeader>
           <CardTitle>Sentinel Monitoring</CardTitle>
           <CardDescription>
-            The Sentinel continuously analyzes logs and metrics. You can edit the data below to simulate different scenarios.
+            The Sentinel continuously analyzes logs and metrics from a sample application. Click &quot;Simulate Incident&quot; to generate a new scenario.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="logs">Logs</Label>
-              <Textarea id="logs" value={logs} onChange={(e) => setLogs(e.target.value)} rows={12} className="font-code text-xs" />
+          <div className="grid md:grid-cols-2 gap-8">
+             <div className="space-y-2">
+              <Label htmlFor="sample-code" className="flex items-center gap-2">
+                <Code className="h-4 w-4" />
+                Sample Code with Bug
+              </Label>
+              <div className="rounded-md border bg-muted p-4">
+                <pre id="sample-code" className="font-code text-xs whitespace-pre-wrap">{sampleCode}</pre>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="metrics">Metrics</Label>
-              <Textarea id="metrics" value={metrics} onChange={(e) => setMetrics(e.target.value)} rows={12} className="font-code text-xs" />
+            <div className="space-y-4">
+                <div className="space-y-2">
+                <Label htmlFor="logs">Logs</Label>
+                <Textarea id="logs" value={logs} readOnly rows={6} className="font-code text-xs bg-muted" />
+                </div>
+                <div className="space-y-2">
+                <Label htmlFor="metrics">Metrics</Label>
+                <Textarea id="metrics" value={metrics} readOnly rows={6} className="font-code text-xs bg-muted" />
+                </div>
             </div>
           </div>
           <div className="flex gap-2 pt-2">
