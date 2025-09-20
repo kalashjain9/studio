@@ -36,7 +36,7 @@ export async function engineerCommandExecution(
 const commandTranslationPrompt = ai.definePrompt({
   name: 'commandTranslationPrompt',
   input: {schema: EngineerCommandExecutionInputSchema},
-  output: {schema: EngineerCommandExecutionOutputSchema},
+  output: {schema: z.object({executionResult: z.string().describe('The exact command to execute.')})},
   prompt: `You are an expert engineer specializing in translating remediation plans into executable commands.
 
 You will receive a remediation plan and translate it into a single, precise command that can be executed in a terminal. Provide just the command, do not provide explanation.

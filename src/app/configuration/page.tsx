@@ -1,8 +1,9 @@
 
 'use client';
 
+import { useState } from 'react';
 import { Sidebar, SidebarProvider, SidebarInset, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
-import { BotMessageSquare, LayoutDashboard, Settings, Save } from 'lucide-react';
+import { BotMessageSquare, LayoutDashboard, Settings, Save, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
@@ -11,8 +12,15 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { agentIcons, AgentName } from "@/components/agent-icons";
 import { Separator } from "@/components/ui/separator";
+import { updateAgentModel } from '@/app/actions';
 
-const agents: { name: AgentName, model: string }[] = [
+
+type AgentConfig = {
+  name: AgentName;
+  model: string;
+};
+
+const initialAgents: AgentConfig[] = [
   { name: "Sentinel", model: "googleai/gemini-1.5-flash-latest" },
   { name: "First Responder", model: "googleai/gemini-1.5-pro-latest" },
   { name: "Commander", model: "googleai/gemini-1.5-pro-latest" },
@@ -22,13 +30,45 @@ const agents: { name: AgentName, model: string }[] = [
 
 export default function ConfigurationPage() {
   const { toast } = useToast();
+  const [agents, setAgents] = useState<AgentConfig[]>(initialAgents);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleModelChange = (agentName: AgentName, model: string) => {
+    setAgents(prev => prev.map(agent => agent.name === agentName ? { ...agent, model } : agent));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    toast({
-      title: "Settings Saved",
-      description: "Your agent configurations have been updated.",
-    });
+    setIsSaving(true);
+    try {
+      const updatePromises = agents.map(agent => {
+        if(agent.name !== 'System') {
+          return updateAgentModel(agent.name, agent.model);
+        }
+        return Promise.resolve({ success: true });
+      });
+      
+      const results = await Promise.all(updatePromises);
+
+      const failedUpdates = results.filter(r => !r.success);
+
+      if (failedUpdates.length > 0) {
+        throw new Error("Some agent configurations failed to update.");
+      }
+
+      toast({
+        title: "Settings Saved",
+        description: "Your agent configurations have been updated.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error Saving Settings",
+        description: error.message || "An unknown error occurred.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -74,7 +114,7 @@ export default function ConfigurationPage() {
                 </CardHeader>
                 <CardContent>
                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {agents.map((agent, index) => {
+                        {agents.filter(a => a.name !== 'System').map((agent, index) => {
                             const AgentIcon = agentIcons[agent.name];
                             return (
                                 <div key={agent.name}>
@@ -88,7 +128,11 @@ export default function ConfigurationPage() {
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                                             <Label htmlFor={`${agent.name}-model`}>LLM Model</Label>
-                                            <Select defaultValue={agent.model}>
+                                            <Select 
+                                              value={agent.model}
+                                              onValueChange={(value) => handleModelChange(agent.name, value)}
+                                              disabled={isSaving}
+                                            >
                                                 <SelectTrigger id={`${agent.name}-model`}>
                                                     <SelectValue placeholder="Select a model" />
                                                 </SelectTrigger>
@@ -99,13 +143,13 @@ export default function ConfigurationPage() {
                                             </Select>
                                         </div>
                                     </div>
-                                    {index < agents.length - 1 && <Separator className="my-8" />}
+                                    {index < agents.length - 2 && <Separator className="my-8" />}
                                 </div>
                             )
                         })}
                         <div className="flex justify-end">
-                            <Button type="submit">
-                                <Save className="mr-2 h-4 w-4" />
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                 Save Changes
                             </Button>
                         </div>
