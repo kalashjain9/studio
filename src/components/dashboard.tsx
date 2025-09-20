@@ -25,11 +25,15 @@ type Step = {
   status: 'pending' | 'in-progress' | 'completed' | 'error';
 };
 
-const generateInitialLogs = () => {
-  const now = new Date();
-  const randomMs = () => Math.floor(Math.random() * 50) + 50;
-  const podName = `my-app-pod-${Math.floor(Math.random() * 3) + 1}`;
-  return `[${now.toISOString()}] INFO: User login successful for user 'test'.
+const scenarios = [
+  {
+    type: 'Memory Leak',
+    incidentReport: "A memory leak was detected in the production environment. Pods are crashing and restarting repeatedly with 'OutOfMemoryError' errors.",
+    generateLogs: () => {
+      const now = new Date();
+      const randomMs = () => Math.floor(Math.random() * 50) + 50;
+      const podName = `my-app-pod-${Math.floor(Math.random() * 3) + 1}`;
+      return `[${now.toISOString()}] INFO: User login successful for user 'test'.
 [${new Date(now.getTime() + 15000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
 [${new Date(now.getTime() + 30000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
 [${new Date(now.getTime() + 45000).toISOString()}] INFO: API call to /api/data processed in ${randomMs()}ms.
@@ -40,25 +44,86 @@ const generateInitialLogs = () => {
 [${new Date(now.getTime() + 70000).toISOString()}] WARN: Liveness probe failed for pod '${podName}'.
 [${new Date(now.getTime() + 72000).toISOString()}] ERROR: OutOfMemoryError: Java heap space.
 [${new Date(now.getTime() + 73000).toISOString()}] CRITICAL: Pod '${podName}' is restarting.`;
-};
-
-const generateInitialMetrics = () => {
-    const podName = `my-app-pod-${Math.floor(Math.random() * 3) + 1}`;
-    const cpu = (Math.random() * (0.9 - 0.7) + 0.7).toFixed(1);
-    const mem = Math.floor(Math.random() * 10) + 90;
-    const traffic = (Math.random() * (2.5 - 1.0) + 1.0).toFixed(1);
-    const lat = Math.floor(Math.random() * 100) + 450;
-    return `cpu_usage{pod="${podName}"}: ${cpu}
+    },
+    generateMetrics: () => {
+        const podName = `my-app-pod-${Math.floor(Math.random() * 3) + 1}`;
+        const cpu = (Math.random() * (0.4 - 0.2) + 0.2).toFixed(1);
+        const mem = Math.floor(Math.random() * 10) + 90;
+        const traffic = (Math.random() * (2.5 - 1.0) + 1.0).toFixed(1);
+        const lat = Math.floor(Math.random() * 100) + 150;
+        return `cpu_usage{pod="${podName}"}: ${cpu}
 memory_usage{pod="${podName}"}: ${mem}%
 network_traffic{pod="${podName}"}: ${traffic}MB/s
 latency{pod="${podName}"}: ${lat}ms`;
+    },
+  },
+  {
+    type: 'CPU Spike',
+    incidentReport: "A sudden CPU spike is causing service degradation. The 'recommendation' service is experiencing high latency and timeouts.",
+    generateLogs: () => {
+        const now = new Date();
+        const podName = `recommendation-service-pod-${Math.floor(Math.random() * 2) + 1}`;
+        return `[${now.toISOString()}] INFO: Request to /recommendations received.
+[${new Date(now.getTime() + 5000).toISOString()}] WARN: High CPU usage detected on ${podName}.
+[${new Date(now.getTime() + 7000).toISOString()}] INFO: Request to /recommendations processed in 1200ms.
+[${new Date(now.getTime() + 15000).toISOString()}] WARN: CPU throttling applied to ${podName}.
+[${new Date(now.getTime() + 20000).toISOString()}] ERROR: Request to /recommendations timed out after 3000ms.
+[${new Date(now.getTime() + 22000).toISOString()}] WARN: High CPU usage detected on ${podName}.
+[${new Date(now.getTime() + 28000).toISOString()}] ERROR: Upstream service /users failed to respond.
+[${new Date(now.getTime() + 35000).toISOString()}] INFO: Scaling up replicas for recommendation-service deployment.`;
+    },
+    generateMetrics: () => {
+        const podName = `recommendation-service-pod-${Math.floor(Math.random() * 2) + 1}`;
+        const cpu = (Math.random() * (0.95 - 0.85) + 0.85).toFixed(2);
+        const mem = Math.floor(Math.random() * 15) + 50;
+        const traffic = (Math.random() * (1.5 - 0.5) + 0.5).toFixed(1);
+        const lat = Math.floor(Math.random() * 500) + 1500;
+        return `cpu_usage{pod="${podName}"}: ${cpu}
+memory_usage{pod="${podName}"}: ${mem}%
+network_traffic{pod="${podName}"}: ${traffic}MB/s
+latency{pod="${podName}"}: ${lat}ms`;
+    },
+  },
+    {
+    type: 'Latency Issue',
+    incidentReport: "High database latency is causing slow API responses and a poor user experience. The 'orders' service is heavily impacted.",
+    generateLogs: () => {
+        const now = new Date();
+        const podName = `orders-service-pod-${Math.floor(Math.random() * 4) + 1}`;
+        return `[${now.toISOString()}] INFO: Processing new order #12345.
+[${new Date(now.getTime() + 2000).toISOString()}] WARN: DB query took 800ms to execute.
+[${new Date(now.getTime() + 5000).toISOString()}] INFO: API call to /api/orders processed in 1500ms.
+[${new Date(now.getTime() + 12000).toISOString()}] WARN: Connection pool to database is reaching its limit.
+[${new Date(now.getTime() + 18000).toISOString()}] ERROR: Failed to acquire database connection for pod ${podName}.
+[${new Date(now.getTime() + 25000).toISOString()}] INFO: API call to /api/orders processed in 2500ms.
+[${new Date(now.getTime() + 30000).toISOString()}] WARN: DB query took 1200ms to execute.
+[${new Date(now.getTime() + 45000).toISOString()}] ERROR: Transaction rollback for order #12348 due to timeout.`;
+    },
+    generateMetrics: () => {
+        const podName = `orders-service-pod-${Math.floor(Math.random() * 4) + 1}`;
+        const cpu = (Math.random() * (0.5 - 0.3) + 0.3).toFixed(1);
+        const mem = Math.floor(Math.random() * 10) + 60;
+        const traffic = (Math.random() * (0.8 - 0.4) + 0.4).toFixed(1);
+        const lat = Math.floor(Math.random() * 1000) + 2000;
+        return `cpu_usage{pod="${podName}"}: ${cpu}
+memory_usage{pod="${podName}"}: ${mem}%
+network_traffic{pod="${podName}"}: ${traffic}MB/s
+latency{pod="${podName}"}: ${lat}ms
+db_query_latency{service="orders-db"}: 950ms`;
+    },
+  },
+];
+
+
+const getRandomScenario = () => {
+    const randomIndex = Math.floor(Math.random() * scenarios.length);
+    return scenarios[randomIndex];
 };
 
-const incidentReport = "A memory leak was detected in the production environment following the last deployment. Pods are crashing and restarting repeatedly with 'OutOfMemoryError' errors.";
-
 export function Dashboard() {
-  const [logs, setLogs] = useState(generateInitialLogs());
-  const [metrics, setMetrics] = useState(generateInitialMetrics());
+  const [currentScenario, setCurrentScenario] = useState(getRandomScenario());
+  const [logs, setLogs] = useState(() => currentScenario.generateLogs());
+  const [metrics, setMetrics] = useState(() => currentScenario.generateMetrics());
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [steps, setSteps] = useState<Step[]>([]);
@@ -70,18 +135,23 @@ export function Dashboard() {
   }, [steps]);
 
   const handleReset = () => {
+    const newScenario = getRandomScenario();
+    setCurrentScenario(newScenario);
+    setLogs(newScenario.generateLogs());
+    setMetrics(newScenario.generateMetrics());
     setSteps([]);
     setOverallStatus('idle');
-    setLogs(generateInitialLogs());
-    setMetrics(generateInitialMetrics());
   };
 
   const handleSimulateIncident = () => {
-    const newLogs = generateInitialLogs();
-    const newMetrics = generateInitialMetrics();
+    // Regenerate data on simulation start
+    const newScenario = getRandomScenario();
+    setCurrentScenario(newScenario);
+    const newLogs = newScenario.generateLogs();
+    const newMetrics = newScenario.generateMetrics();
     setLogs(newLogs);
     setMetrics(newMetrics);
-
+    
     startTransition(async () => {
       setOverallStatus('in-progress');
       let currentSteps: Step[] = [];
@@ -101,14 +171,14 @@ export function Dashboard() {
           return;
         }
 
-        currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'Anomaly Detected!', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{incidentReport}</pre> };
+        currentSteps[0] = { ...currentSteps[0], status: 'completed', title: 'Anomaly Detected!', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{newScenario.incidentReport}</pre> };
         setSteps([...currentSteps]);
 
         // Step 2: First Responder
         currentSteps = [...currentSteps, { agent: 'First Responder', title: 'Diagnosing the root cause...', content: '', status: 'in-progress' }];
         setSteps([...currentSteps]);
 
-        const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport });
+        const diagnosisResult = await runFirstResponderIncidentDiagnosis({ incidentReport: newScenario.incidentReport });
         if (!diagnosisResult || !diagnosisResult.diagnosisReport) throw new Error('First Responder failed to provide a diagnosis.');
         
         currentSteps[1] = { ...currentSteps[1], status: 'completed', title: 'Root Cause Analysis Complete', content: <pre className="font-code text-sm p-2 bg-muted rounded-md whitespace-pre-wrap">{diagnosisResult.diagnosisReport}</pre>};
@@ -143,7 +213,7 @@ export function Dashboard() {
         setSteps([...currentSteps]);
         
         const reportResult = await runCommunicatorIncidentReporting({
-          incidentDetection: incidentReport,
+          incidentDetection: newScenario.incidentReport,
           diagnosisReport: diagnosisResult.diagnosisReport,
           remediationSteps: executionResult.executionResult
         });
