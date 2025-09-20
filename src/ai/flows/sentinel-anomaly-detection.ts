@@ -41,7 +41,7 @@ const detectAnomalyPrompt = ai.definePrompt({
 
   Consider factors such as error rates, latency, resource usage, and any other relevant information that might indicate a problem.
 `,
-  model: 'googleai/gemma-2-it',
+  model: 'googleai/gemini-1.5-flash-latest',
 });
 
 const detectAnomalyFlow = ai.defineFlow(
