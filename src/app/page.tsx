@@ -15,10 +15,12 @@ export default function Home() {
         </SidebarHeader>
         <SidebarMenu className="flex-grow">
           <SidebarMenuItem>
-            <SidebarMenuButton isActive tooltip="Dashboard">
-              <LayoutDashboard />
-              <span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
-            </SidebarMenuButton>
+            <Link href="/">
+              <SidebarMenuButton isActive tooltip="Dashboard">
+                <LayoutDashboard />
+                <span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/configuration">
