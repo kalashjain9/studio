@@ -18,8 +18,8 @@ const CommanderRemediationPlanningInputSchema = z.object({
     .describe(
       'A detailed diagnostic report of the incident from the First Responder agent.'
     ),
-  deploymentName: z.string().describe('The name of the affected deployment.').optional(),
-  namespace: z.string().describe('The Kubernetes namespace of the application.').optional(),
+  deploymentName: z.string().describe('The name of the affected deployment.').optional().nullable(),
+  namespace: z.string().describe('The Kubernetes namespace of the application.').optional().nullable(),
 });
 export type CommanderRemediationPlanningInput = z.infer<
   typeof CommanderRemediationPlanningInputSchema
@@ -60,7 +60,7 @@ The affected deployment is '{{{deploymentName}}}' in the '{{{namespace}}}' names
 
 What is the best course of action? Explain the decision and provide a clear, structured plan for remediation.
 `,
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
 });
 
 const commanderRemediationPlanningFlow = ai.defineFlow(
