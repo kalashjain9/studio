@@ -42,6 +42,7 @@ const commandTranslationPrompt = ai.definePrompt({
 You will receive a remediation plan and translate it into a single, precise command that can be executed in a terminal. Provide just the command, do not provide explanation.
 
 Remediation Plan: {{{remediationPlan}}}`,
+  model: 'googleai/gemini-pro',
 });
 
 const engineerCommandExecutionFlow = ai.defineFlow(

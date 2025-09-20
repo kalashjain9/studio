@@ -81,6 +81,7 @@ const prompt = ai.definePrompt({
   Finally, compile a diagnosis report summarizing your findings.
   Output must be a diagnosis report that concisely describes the root cause of the issue.
 `,
+  model: 'googleai/gemini-1.5-pro-latest',
 });
 
 const firstResponderIncidentDiagnosisFlow = ai.defineFlow(
