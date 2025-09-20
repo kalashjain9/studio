@@ -54,19 +54,11 @@ export async function updateAgentModel(agentName: AgentName, model: string) {
     try {
         let fileContent = await fs.readFile(filePath, 'utf-8');
         
-        const modelRegex = /model: 'googleai\/([^']*)'/;
+        const modelRegex = /model: '([^']*)'/;
         if (modelRegex.test(fileContent)) {
-            fileContent = fileContent.replace(modelRegex, `model: 'googleai/${model}'`);
+            fileContent = fileContent.replace(modelRegex, `model: '${model}'`);
             await fs.writeFile(filePath, fileContent, 'utf-8');
             return { success: true };
-        } else {
-            // Fallback for different model definition syntax
-            const modelRegex2 = /model: '([^']*)'/;
-             if (modelRegex2.test(fileContent)) {
-                fileContent = fileContent.replace(modelRegex2, `model: 'googleai/${model}'`);
-                await fs.writeFile(filePath, fileContent, 'utf-8');
-                return { success: true };
-            }
         }
         
         return { success: false, error: 'Model definition not found in file.' };

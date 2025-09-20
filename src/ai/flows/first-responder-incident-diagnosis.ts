@@ -18,8 +18,8 @@ export type FirstResponderIncidentDiagnosisInput = z.infer<typeof FirstResponder
 
 const FirstResponderIncidentDiagnosisOutputSchema = z.object({
   diagnosisReport: z.string().describe('The diagnosis report of the incident.'),
-  deploymentName: z.string().describe('The name of the affected deployment.').optional(),
-  namespace: z.string().describe('The Kubernetes namespace of the application.').optional(),
+  deploymentName: z.string().describe('The name of the affected deployment.').optional().nullable(),
+  namespace: z.string().describe('The Kubernetes namespace of the application.').optional().nullable(),
 });
 export type FirstResponderIncidentDiagnosisOutput = z.infer<typeof FirstResponderIncidentDiagnosisOutputSchema>;
 
@@ -87,7 +87,7 @@ Think step-by-step:
 3.  If this seems like an infrastructure issue, use your tools to investigate.
 4.  Compile a concise diagnosis report summarizing your findings. If you identify a specific deployment or namespace from your tool use, include them. If not, you can omit them.
 `,
-  model: 'googleai/gemini-1.5-pro-latest',
+  model: 'gemini-1.5-flash-latest',
 });
 
 const firstResponderIncidentDiagnosisFlow = ai.defineFlow(

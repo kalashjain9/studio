@@ -60,7 +60,7 @@ The affected deployment is '{{{deploymentName}}}' in the '{{{namespace}}}' names
 
 What is the best course of action? Explain the decision and provide a clear, structured plan for remediation.
 `,
-  model: 'googleai/gemini-1.5-pro-latest',
+  model: 'gemini-1.5-flash-latest',
 });
 
 const commanderRemediationPlanningFlow = ai.defineFlow(

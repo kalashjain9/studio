@@ -21,11 +21,11 @@ type AgentConfig = {
 };
 
 const initialAgents: AgentConfig[] = [
-  { name: "Sentinel", model: "googleai/gemini-1.5-flash-latest" },
-  { name: "First Responder", model: "googleai/gemini-1.5-pro-latest" },
-  { name: "Commander", model: "googleai/gemini-1.5-pro-latest" },
-  { name: "Engineer", model: "googleai/gemini-1.5-flash-latest" },
-  { name: "Communicator", model: "googleai/gemini-1.5-flash-latest" },
+  { name: "Sentinel", model: "gemini-1.5-flash-latest" },
+  { name: "First Responder", model: "gemini-1.5-pro-latest" },
+  { name: "Commander", model: "gemini-1.5-pro-latest" },
+  { name: "Engineer", model: "gemini-1.5-flash-latest" },
+  { name: "Communicator", model: "gemini-1.5-flash-latest" },
 ];
 
 export default function ConfigurationPage() {
@@ -137,8 +137,8 @@ export default function ConfigurationPage() {
                                                     <SelectValue placeholder="Select a model" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="googleai/gemini-1.5-pro-latest">Gemini 1.5 Pro</SelectItem>
-                                                    <SelectItem value="googleai/gemini-1.5-flash-latest">Gemini 1.5 Flash</SelectItem>
+                                                    <SelectItem value="gemini-1.5-pro-latest">Gemini 1.5 Pro</SelectItem>
+                                                    <SelectItem value="gemini-1.5-flash-latest">Gemini 1.5 Flash</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
