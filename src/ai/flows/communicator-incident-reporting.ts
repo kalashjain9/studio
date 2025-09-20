@@ -40,7 +40,7 @@ const prompt = ai.definePrompt({
 
   Generate a concise and easy-to-understand summary report for human developers.
   `,
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-1.5-flash',
 });
 
 const communicatorIncidentReportingFlow = ai.defineFlow(

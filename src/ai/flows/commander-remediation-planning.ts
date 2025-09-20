@@ -55,7 +55,7 @@ Diagnostic Report:
 
 What is the best course of action? Explain the decision and provide a clear, structured plan for remediation.
 `,
-  model: 'googleai/gemini-2.5-pro',
+  model: 'googleai/gemini-1.5-pro',
 });
 
 const commanderRemediationPlanningFlow = ai.defineFlow(
